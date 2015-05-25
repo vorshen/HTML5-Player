@@ -1,0 +1,337 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>播放器</title>
+<style>
+	body{ margin:0; background-color:white;}
+	img{ vertical-align:top; border:none;}
+	
+	#wrap{ width:600px; margin:10px auto;}
+	#video{ width:600px;}
+	#video_title{ background-color:black; height:72px; position:relative;}
+	#video_title img{ position:absolute; width:168px; height:23px; left:44px; top:25px;}
+	
+	#video_content{ background-color:black; text-align:center; position:relative;}
+	#video_mask{ background-color:white; opacity:0.7; position:absolute; left:0; top:0; width:100%; height:100%; display:block;}
+	#video_mask_mark{ position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); border-radius:50%; border:5px solid red; box-sizing:border-box; font-family:Verdana, Geneva, sans-serif; font-size:24px; cursor:pointer;}
+	#video_mask_box{ width:30px; height:30px; position:absolute; left:0; top:0; background-color:white; border-radius:50%;}
+	
+	#video_control{ height:72px; background-color:black; position:relative;}
+	.video_input{ position:absolute; cursor:pointer;}
+	#video_left{ left:44px; top:33px; border-radius:19px;}
+	#video_play{ left:108px; top:23px; border-radius:50%;}
+	#video_shutdown{ left:169px; top:29px; border-radius:50%;}
+	#video_right{ left:213px; top:33px; border-radius:19px;}
+	#video_gag{ left:292px; top:29px; border-radius:50%;}
+	#video_volume{ left:331px; top:25px; border-radius:50%;}
+	#video_fullScreen{ left:534px; top:22px; border-radius:50%;}
+	.video_input:hover{ box-shadow:0 0 20px 2px white;}
+	#video_progress_total{ position:absolute; width:100%; height:4px; background-color:#FF9;}
+	#video_progress_current{ position:absolute; height:4px; background-color:#F60; top:0px;}
+	#video_progress_btn{ position:absolute; width:14px; height:14px; border-radius:50%; background-color:#CCC; top:-6px; border-right:gray 2px solid; border-bottom:gray 2px solid; cursor:pointer;}
+	
+	.video_text{ color:white; font-family:Verdana, Geneva, sans-serif; font-size:12px; position:absolute;}
+	#video_tCur{ left:380px; top:35px;}
+	#video_tTol{ left:450px; top:35px;}
+	.video_cut{ width:2px; height:20px; position:absolute; left:443px; top:32px; background-color:white; transform:skewX(-5deg)}
+	#video_sound{ position:absolute; top:14px; left:290px; width:140px; height:14px; display:none;}
+	#video_sound_progress{ position:absolute; background-color:#CCC; width:100px; height:4px;}
+	#video_sound_btn{ width:6px; height:10px; background-color:white; position:absolute; top:-3px; cursor:pointer; left:47px;}
+	#video_sound_num{ font-size:14px; color:white; position:absolute; font-family:Verdana, Geneva, sans-serif; right:0px; transform:translate(10px,-35%);}
+</style>
+</head>
+
+<body>
+	<div id="wrap">
+		<div id="video">
+    		<div id="video_title">
+        		<img src="./img/title.png" />
+        	</div>
+        	<div id="video_content">
+            	<video id="v1">
+                	<source src="./img/Intermission-Walk-in.ogv"></source>
+                    <source src="./img/Intermission-Walk-in_512kb.mp4"></source>
+                </video>
+                <div id="video_mask">
+                	<div id="video_mask_mark">Go</div>
+                    <div id="video_mask_box"></div>
+                </div>
+            </div>
+        	<div id="video_control">
+            	<div class="video_input" id="video_left"><img src="./img/left.png" /></div>
+                <div class="video_input" id="video_right"><img src="./img/right.png" /></div>
+                <div class="video_input" id="video_play"><img src="./img/play.png" /></div>
+                <div class="video_input" id="video_shutdown"><img src="./img/shutdown.png" /></div>
+                <div class="video_input" id="video_gag"><img src="./img/gag.png" /></div>
+                <div class="video_input" id="video_volume"><img src="./img/volume.png" /></div>
+                <div class="video_text" id="video_tCur">00:00:00</div>
+                <div class="video_cut"></div>
+                <div class="video_text" id="video_tTol">00:00:00</div>
+                <div class="video_input" id="video_fullScreen"><img src="./img/fullScreen.png" /></div>
+                <div id="video_progress_total"></div>
+                <div id="video_progress_current"></div>
+                <div id="video_progress_btn"></div>
+                
+                <div id="video_sound">
+                	<div id="video_sound_progress"></div>
+                	<div id="video_sound_btn"></div>
+                    <div id="video_sound_num">50%</div>
+                </div>
+            </div>
+    	</div>
+    </div>
+</body>
+<script>
+	window.onload = function(){
+		var oH5v = new Video();
+		
+		function Video(){
+			var This = this;
+			
+			This.content = document.getElementById('video_content');	//视频中间内容部分
+			This.video = document.getElementById('v1');		//真正的视频
+			This.left = document.getElementById('video_left');			//控制台左箭头
+			This.right = document.getElementById('video_right');		//控制台右箭头
+			This.play = document.getElementById('video_play');		//控制台播放
+			This.shutdown = document.getElementById('video_shutdown');		//控制台停止
+			This.gag = document.getElementById('video_gag');	//静音
+			This.volume = document.getElementById('video_volume');	//音量
+			This.fullScreen = document.getElementById('video_fullScreen');		//全屏
+			This.videoMask = document.getElementById('video_mask');		//遮罩
+			This.tCur = document.getElementById('video_tCur');
+			This.tTol = document.getElementById('video_tTol');
+			This.progressCurrent = document.getElementById('video_progress_current');
+			This.progressBtn = document.getElementById('video_progress_btn');
+			This.soundBtn = document.getElementById('video_sound_btn');
+			This.soundNum = document.getElementById('video_sound_num');
+			This.soundBox = document.getElementById('video_sound');
+			
+			This.tTol.innerHTML = formatTime(This.video.duration);
+			This.video.volume = 0.5;
+			This.sound = 0.5;
+			enableDrag(This.soundBtn, 0, 94, function(obj){
+				var precent = Math.floor(parseInt(obj.style.left) / 94 * 100);
+				
+				This.soundNum.innerHTML = precent + '%';
+				This.video.volume = This.sound = precent / 100;
+			});
+			
+			enableDrag(This.progressBtn, 0, 593, function(obj){
+				var precent = Math.floor(parseInt(obj.style.left) / 593 * 100);
+				
+				//document.title = precent;
+				This.progressCurrent.style.width = (precent+1) + '%';
+				This.video.currentTime = precent/100 * This.video.duration;
+				This.tCur.innerHTML = formatTime(This.video.currentTime);
+			});
+			
+			This.content.onclick = function(){
+				if(!This.video.paused)
+					This.fPlay();
+			}
+			
+			This.play.onclick = function(){
+				This.fPlay();
+			}
+			
+			This.gag.onclick = function(){
+				This.fGag();
+			}
+			
+			This.left.onclick = function(){
+				This.fLeft();
+			}
+			
+			This.right.onclick = function(){
+				This.fRight();
+			}
+			
+			This.volume.onclick = function(){
+				This.fVolume();
+			}
+			
+			This.shutdown.onclick = function(){
+				This.fShutdown();
+			}
+		}
+		
+		function Mask(){
+			var This = this;
+			
+			This.mark = document.getElementById('video_mask_mark');
+			
+			This.mark.style.height = '50%';
+			This.len = This.mark.style.width = This.mark.offsetHeight + 'px';
+			This.mark.style.lineHeight = This.mark.offsetHeight - 10 + 'px';
+			
+			This.box = document.getElementById('video_mask_box');
+			
+			This.len = parseInt(This.len) / 2;
+			
+			This.width = oH5v.videoMask.offsetWidth,
+			This.height = oH5v.videoMask.offsetHeight;
+			
+			This.setTimer();
+			
+			This.construct = function(){
+				This.mark.onmouseover = function(){
+					This.clearTimer();
+				}
+				
+				This.mark.onmouseout = function(){
+					This.setTimer();
+				}
+			}
+			
+			This.destruct = function(){
+				This.mark.onmouseover = null;
+				This.mark.onmouseout = null;
+			}
+			
+			This.mark.onclick = function(ev){
+				if(oH5v.video.paused){
+					ev.stopPropagation();
+				
+					oH5v.fPlay();
+				}
+			}
+		}
+		
+		Mask.prototype.clearTimer = function(){
+			var This = this;
+			
+			clearInterval(This.timer);
+		}
+		
+		Mask.prototype.setTimer = function(){
+			var This = this;
+			
+			This.timer = setInterval(function(){
+				This.a += 2;
+				This.box.style.left = This.width / 2 + Math.cos(This.a*Math.PI/180) * This.len - 15 + 'px';
+				This.box.style.top = This.height / 2 + Math.sin(This.a*Math.PI/180) * This.len - 15 + 'px';
+			}, 30);
+		}
+		
+		Mask.prototype.a = 0;
+		
+		oH5v.fPlay = function(){
+			var This = this;
+			
+			if(This.video.paused){
+				This.oMask.destruct();
+				This.videoMask.style.display = 'none';
+				This.oMask.clearTimer();
+				This.video.play();
+				This.timer = setInterval(This.nowTime.bind(This), 1000);
+				This.play.children[0].setAttribute('src', './img/stop.png');
+			}else{
+				This.oMask.construct();
+				This.videoMask.style.display = 'block';
+				This.oMask.setTimer();
+				This.video.pause();
+				clearInterval(This.timer);
+				This.play.children[0].setAttribute('src', './img/play.png');
+			}
+		}
+		
+		oH5v.fGag = function(){
+			var This = this;
+			
+			if(This.video.muted){
+				This.video.volume = This.sound;
+				This.soundBtn.style.left = This.sound * 94 + 'px';
+				This.soundNum.innerHTML = This.sound * 100 + '%';
+				This.video.muted = false;
+			}else{
+				This.video.volume = 0;
+				This.soundBtn.style.left = '0px';
+				This.soundNum.innerHTML = '0%';
+				This.video.muted = true;
+			}
+		}
+		
+		oH5v.fLeft = function(){
+			alert('上一个');
+		}
+		
+		oH5v.fRight = function(){
+			alert('下一个');
+		}
+		
+		oH5v.fVolume = function(){
+			var This = this;
+			
+			var state = This.soundBox.style.display;
+			
+			if(state == 'none' || state == '')
+				This.soundBox.style.display = 'block';
+			else
+				This.soundBox.style.display = 'none';
+		}
+		
+		oH5v.fShutdown = function(){
+			var This = this;
+			
+			if(This.video.paused)
+				This.fPlay();
+			This.video.currentTime = This.video.duration;
+			This.progressCurrent.style.width = '100%';
+			This.progressBtn.style.left = This.progressCurrent.offsetWidth - 8 + 'px';
+		}
+		
+		oH5v.nowTime = function(){
+			var This = this;
+			var percent = This.video.currentTime / This.video.duration;
+			
+			if(percent == 1){
+				clearInterval(This.timer);
+			}
+			
+			This.progressCurrent.style.width = Math.floor(percent * 100) + '%';
+			This.tCur.innerHTML = formatTime(This.video.currentTime);
+			
+			This.progressBtn.style.left = This.progressCurrent.offsetWidth < 8 ? (0 + 'px') : (This.progressCurrent.offsetWidth - 8 + 'px');
+		}
+		
+		oH5v.timer = null;
+
+		oH5v.oMask = new Mask();
+		oH5v.oMask.construct();
+		
+		function formatTime(t){
+			var time = parseInt(t);
+			var iH = toZero(Math.floor(time / 3600));
+			var iM = toZero(Math.floor(time % 3600 / 60));
+			var iS = toZero(Math.floor(time % 60));
+			
+			return iH + ':' + iM + ':' + iS;
+			
+			function toZero(num){
+				return num <= 9 ? '0' + num : '' + num;
+			}
+		}
+		
+		function enableDrag(obj, iMin, iMax, fn){
+			obj.onmousedown = function(ev){
+				ev.preventDefault();
+				
+				var iX = ev.clientX - obj.offsetLeft;
+					
+				document.onmousemove = function(ev){
+					var iLeft= (ev.clientX - iX) < iMin ? iMin : (ev.clientX - iX) > iMax ? iMax : (ev.clientX - iX);
+					obj.style.left = iLeft + 'px';
+					
+					fn(obj);
+				}
+				
+				document.onmouseup =function(){
+					document.onmousemove = null;
+					document.onmouseup = null;
+				}
+			}
+		}
+	}
+</script>
+</html>
